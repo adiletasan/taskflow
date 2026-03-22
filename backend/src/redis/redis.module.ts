@@ -10,7 +10,18 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
     {
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
-        return new Redis(configService.get<string>('REDIS_URL') || 'redis://localhost:6379');
+        const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+        const isSecure = redisUrl.startsWith('rediss://');
+
+        return new Redis(redisUrl, {
+          tls: isSecure ? {} : undefined,
+          maxRetriesPerRequest: 3,
+          retryStrategy: (times) => {
+            if (times > 3) return null;
+            return Math.min(times * 200, 1000);
+          },
+          enableOfflineQueue: false,
+        });
       },
       inject: [ConfigService],
     },

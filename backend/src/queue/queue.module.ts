@@ -6,9 +6,21 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
   imports: [
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        redis: configService.get<string>('REDIS_URL') || 'redis://localhost:6379',
-      }),
+      useFactory: (configService: ConfigService) => {
+        const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
+        const isSecure = redisUrl.startsWith('rediss://');
+        const url = new URL(redisUrl);
+
+        return {
+          redis: {
+            host: url.hostname,
+            port: parseInt(url.port) || 6379,
+            password: url.password || undefined,
+            username: url.username || undefined,
+            tls: isSecure ? {} : undefined,
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     BullModule.registerQueue({

@@ -24,17 +24,37 @@ import { BillingModule } from './billing/billing.module';
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: () => ({
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        username: 'postgres',
-        password: 'postgres',
-        database: 'todoist_db',
-        entities: [__dirname + '/**/*.entity{.ts,.js}'],
-        synchronize: true,
-        logging: false,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+        const isProduction = configService.get('NODE_ENV') === 'production';
+
+        // Production — используем DATABASE_URL от Render
+        if (isProduction && databaseUrl) {
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            entities: [__dirname + '/**/*.entity{.ts,.js}'],
+            synchronize: true,
+            logging: false,
+            ssl: { rejectUnauthorized: false },
+            extra: { max: 10 },
+          };
+        }
+
+        // Development — локальный PostgreSQL
+        return {
+          type: 'postgres',
+          host: 'localhost',
+          port: 5432,
+          username: 'postgres',
+          password: 'postgres',
+          database: 'todoist_db',
+          entities: [__dirname + '/**/*.entity{.ts,.js}'],
+          synchronize: true,
+          logging: false,
+          extra: { max: 10 },
+        };
+      },
       inject: [ConfigService],
     }),
 
