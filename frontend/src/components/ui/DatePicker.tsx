@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
 interface Props {
   value: string;
@@ -43,13 +43,6 @@ export const DatePicker = ({ value, onChange, onClose }: Props) => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const formatDisplay = (dateStr: string) => {
-    if (!dateStr) return '';
-    return new Date(dateStr).toLocaleDateString('ru-RU', {
-      day: 'numeric', month: 'short',
-    });
-  };
-
   return (
     <div ref={ref} style={{
       background: 'var(--bg-3)',
@@ -84,10 +77,8 @@ export const DatePicker = ({ value, onChange, onClose }: Props) => {
         ))}
       </div>
 
-      {/* Разделитель */}
       <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
 
-      {/* Нативный date input */}
       <div>
         <label style={{ fontSize: 11, color: 'var(--text-3)', display: 'block', marginBottom: 6 }}>
           Выбрать дату
@@ -106,7 +97,6 @@ export const DatePicker = ({ value, onChange, onClose }: Props) => {
         />
       </div>
 
-      {/* Очистить */}
       {value && (
         <>
           <div style={{ height: 1, background: 'var(--border)', margin: '8px 0' }} />
