@@ -11,16 +11,19 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       provide: REDIS_CLIENT,
       useFactory: (configService: ConfigService) => {
         const redisUrl = configService.get<string>('REDIS_URL') || 'redis://localhost:6379';
-        const isSecure = redisUrl.startsWith('rediss://');
 
+        // Upstash использует rediss:// — передаём напрямую как строку
         return new Redis(redisUrl, {
-          tls: isSecure ? {} : undefined,
+          tls: redisUrl.startsWith('rediss://') ? {
+            rejectUnauthorized: false,
+          } : undefined,
           maxRetriesPerRequest: 3,
           retryStrategy: (times) => {
             if (times > 3) return null;
             return Math.min(times * 200, 1000);
           },
           enableOfflineQueue: false,
+          lazyConnect: false,
         });
       },
       inject: [ConfigService],
