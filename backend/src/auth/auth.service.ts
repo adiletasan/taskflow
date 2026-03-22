@@ -41,12 +41,10 @@ export class AuthService {
       passwordHash,
     });
 
-    // Создаём Inbox проект
     await this.projectsService.createInbox(user.id);
 
-    // Отправляем письмо верификации
     const verifyToken = uuidv4();
-    await this.redis.set(`verify:${verifyToken}`, user.id, 'EX', 86400); // 24 часа
+    await this.redis.set(`verify:${verifyToken}`, user.id, 'EX', 86400);
     await this.mailService.sendVerificationEmail(user.email, user.name, verifyToken);
 
     return { message: 'Регистрация успешна. Проверь email для подтверждения.' };
@@ -76,7 +74,6 @@ export class AuthService {
       throw new UnauthorizedException('Недействительный refresh token');
     }
 
-    // Проверяем что токен есть в Redis
     const stored = await this.redis.get(`refresh:${payload.sub}:${refreshToken}`);
     if (!stored) throw new UnauthorizedException('Refresh token отозван');
 
@@ -91,7 +88,12 @@ export class AuthService {
     if (refreshToken) {
       await this.redis.del(`refresh:${userId}:${refreshToken}`);
     }
-    res.clearCookie('refresh_token');
+    res.clearCookie('refresh_token', {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+    });
     return { message: 'Выход выполнен' };
   }
 
@@ -109,11 +111,10 @@ export class AuthService {
   // ─── Забыл пароль ──────────────────────────────────────────────
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
-    // Не говорим что юзер не найден (безопасность)
     if (!user) return { message: 'Если email существует, письмо отправлено' };
 
     const token = uuidv4();
-    await this.redis.set(`reset:${token}`, user.id, 'EX', 3600); // 1 час
+    await this.redis.set(`reset:${token}`, user.id, 'EX', 3600);
     await this.mailService.sendPasswordResetEmail(user.email, user.name, token);
 
     return { message: 'Если email существует, письмо отправлено' };
@@ -138,6 +139,13 @@ export class AuthService {
     return user;
   }
 
+  // ─── Принять приглашение ───────────────────────────────────────
+  async acceptInvite(token: string) {
+    const raw = await this.redis.get(`invite:${token}`);
+    if (!raw) throw new BadRequestException('Ссылка недействительна или истекла');
+    return { token, message: 'Используй /projects/invite/:token/accept' };
+  }
+
   // ─── Вспомогательные методы ────────────────────────────────────
   private async generateTokens(user: any, res: any) {
     const payload = { sub: user.id, email: user.email };
@@ -152,7 +160,6 @@ export class AuthService {
       expiresIn: this.configService.get('JWT_REFRESH_EXPIRES_IN') || '30d',
     });
 
-    // Сохраняем refresh token в Redis (30 дней)
     await this.redis.set(
       `refresh:${user.id}:${refreshToken}`,
       '1',
@@ -160,12 +167,12 @@ export class AuthService {
       60 * 60 * 24 * 30,
     );
 
-    // Устанавливаем httpOnly cookie
+    // ← sameSite: 'none' + secure: true для cross-domain cookies
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: this.configService.get('NODE_ENV') === 'production',
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30 дней
+      secure: true,
+      sameSite: 'none',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
       path: '/',
     });
 
@@ -180,12 +187,5 @@ export class AuthService {
         isEmailVerified: user.isEmailVerified,
       },
     };
-  }
-
-  async acceptInvite(token: string) {
-    // Делегируем в CollaborationService через Redis напрямую
-    const raw = await this.redis.get(`invite:${token}`);
-    if (!raw) throw new BadRequestException('Ссылка недействительна или истекла');
-    return { token, message: 'Используй /projects/invite/:token/accept' };
   }
 }

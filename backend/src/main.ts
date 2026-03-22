@@ -13,18 +13,19 @@ async function bootstrap() {
 
   const configService = app.get(ConfigService);
 
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }));
   app.use(cookieParser());
 
-  // CORS — разрешаем frontend
+  const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+
   app.enableCors({
-    origin: [
-      configService.get<string>('FRONTEND_URL') || 'http://localhost:5173',
-      'http://localhost:5173',
-    ],
+    origin: [frontendUrl, 'http://localhost:5173'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
   });
 
   app.useGlobalPipes(
