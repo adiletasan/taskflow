@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+:root {
+  --bg:           #0e0e0f;
+  --bg-2:         #141415;
+  --bg-3:         #1a1a1b;
+  --bg-4:         #222224;
+  --border:       #2a2a2d;
+  --border-light: #333336;
+  --text:         #e8e8ea;
+  --text-2:       #9898a0;
+  --text-3:       #5a5a62;
+  --accent:       #e5483a;
+  --accent-dim:   rgba(229,72,58,0.12);
+  --accent-hover: #f05548;
+  --p1:           #e5483a;
+  --p2:           #f59e0b;
+  --p3:           #3b82f6;
+  --p4:           #4a4a52;
+  --radius:       10px;
+  --radius-lg:    16px;
+  --sidebar-w:    240px;
+  --font:         'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+  --transition:   0.15s ease;
+}
+
+[data-theme="light"] {
+  --bg:           #ffffff;
+  --bg-2:         #f7f7f8;
+  --bg-3:         #efefef;
+  --bg-4:         #e5e5e7;
+  --border:       #e0e0e2;
+  --border-light: #d0d0d2;
+  --text:         #111112;
+  --text-2:       #52525a;
+  --text-3:       #9898a0;
+  --accent:       #e5483a;
+  --accent-dim:   rgba(229,72,58,0.08);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-3); }
+
+::selection { background: var(--accent-dim); color: var(--text); }
+
+input, textarea, button { font-family: var(--font); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
+}
+
+.animate-fade-up   { animation: fadeUp 0.3s ease forwards; }
+.animate-fade-in   { animation: fadeIn 0.2s ease forwards; }
+.animate-spin-slow { animation: spin 0.7s linear infinite; }
