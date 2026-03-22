@@ -10,14 +10,21 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.setGlobalPrefix('api');
+
   const configService = app.get(ConfigService);
 
   app.use(helmet());
   app.use(cookieParser());
 
+  // CORS — разрешаем frontend
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_URL') || 'http://localhost:5173',
+    origin: [
+      configService.get<string>('FRONTEND_URL') || 'http://localhost:5173',
+      'http://localhost:5173',
+    ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
   });
 
   app.useGlobalPipes(
@@ -28,7 +35,6 @@ async function bootstrap() {
     }),
   );
 
-  // Seed публичных шаблонов
   const templatesService = app.get(TemplatesService);
   await templatesService.seedPublicTemplates();
 
